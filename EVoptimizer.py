@@ -55,9 +55,10 @@ def extreme_value_optimizer(w_init, lr=0.01, epochs=500, tol=1e-4):
         
     return w, w_history
 
-w_final, w_hist = extreme_value_optimizer(w_init=2.0, lr=0.02, epochs=500)
+# 최적화 실행
+w_final, w_hist = extreme_value_optimizer(w_init=0, lr=0.02, epochs=500)
 
-w_range = np.linspace(-2.5, 2.5, 500)
+w_range = np.linspace(-3, 3, 500)
 loss_range = loss_function(w_range)
 
 plt.figure(figsize=(10, 6))
