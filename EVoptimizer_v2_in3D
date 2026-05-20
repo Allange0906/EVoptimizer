@@ -1,0 +1,93 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# 손실 함수
+def loss_function(w):
+    return w[0]**2 - w[1]**2
+
+# 손실 함수의 도함수 정의
+def gradient_function(w):
+    return np.array([2 * w[0], -2 * w[1]])
+
+# 최대-최소 정리 기반 최적화 알고리즘
+def extreme_value_optimizer(w_init, lr=0.05, epochs=60, tol=0.05):
+    w = np.array(w_init, dtype=float) # 가중치 벡터 [x, y]
+    w_history = [w.copy()]  # 과거 가중치 기록
+    
+    print(f"[학습 시작] 초기 가중치 w = [{w[0]:.4f}, {w[1]:.4f}], 초기 오차 = {loss_function(w):.4f}\n")
+    
+    for epoch in range(epochs):
+        grad = gradient_function(w)
+        loss_c = loss_function(w)
+        
+        grad_norm = np.linalg.norm(grad)
+        
+        if grad_norm < tol:
+            print(f"★ [Epoch {epoch}] 기울기 정체(안장점 근접) 감지! (Grad Norm: {grad_norm:.4f})")
+            
+            delta = 0.5  
+
+            while delta < 10:
+                c = w.copy()
+                
+                # 무작위 방향 벡터 생성 및 정규화
+                v = np.random.randn(2)
+                v = v / np.linalg.norm(v)
+                
+                # 생성된 무작위 벡터 v 방향으로 닫힌 구간 [a, b] 설정
+                points = {
+                    'c': c,
+                    'a': c - delta * v,
+                    'b': c + delta * v
+                }
+                
+                losses = {key: loss_function(pt) for key, pt in points.items()}
+                min_key = min(losses, key=losses.get)
+                
+                if min_key == 'c':
+                    # c가 가장 낮다면 delta를 늘려 더 넓은 구간 탐색
+                    delta *= 1.5
+                    continue
+                else:
+                    # f(a)나 f(b)가 더 작다면 그 가중치로 순간이동
+                    w = points[min_key]
+                    w_history.append(w.copy())
+                    print(f"f({min_key})가 더 낮으므로 w = [{w[0]:.4f}, {w[1]:.4f}] 지점으로 이동하여 하강 재개\n")
+                    break
+        
+        # 일반 경사하강법 진행
+        w = w - lr * grad
+        w_history.append(w.copy())
+        
+    return w, w_history
+
+# 최적화 실행
+w_final, w_hist = extreme_value_optimizer(w_init=[2.0, 0.0], lr=0.05, epochs=60)
+w_hist = np.array(w_hist)
+
+x_range = np.linspace(-2.5, 2.5, 100)
+y_range = np.linspace(-2.5, 2.5, 100)
+X, Y = np.meshgrid(x_range, y_range)
+Z = X**2 - Y**2
+
+fig = plt.figure(figsize=(12, 8))
+ax = fig.add_subplot(111, projection='3d')
+
+surf = ax.plot_surface(X, Y, Z, cmap='coolwarm', edgecolor='none', alpha=0.5, zorder=1)
+z_hist = w_hist[:, 0]**2 - w_hist[:, 1]**2
+
+ax.plot(w_hist[:, 0], w_hist[:, 1], z_hist, 'ro--', linewidth=2, markersize=5, zorder=3, label='Optimization Path')
+ax.scatter(w_hist[0, 0], w_hist[0, 1], z_hist[0], color='green', s=100, marker='o', zorder=5, label='Start Point')
+ax.scatter(w_final[0], w_final[1], loss_function(w_final), color='gold', edgecolor='black', s=200, marker='*', zorder=5, label='Final Position')
+
+ax.view_init(elev=25, azim=-55)
+
+# 그래프 스타일링
+ax.set_xlabel('Weight X (w0)', fontsize=11)
+ax.set_ylabel('Weight Y (w1)', fontsize=11)
+ax.set_zlabel('Loss (Z)', fontsize=11)
+ax.set_title('3D EV Optimizer (Fixed Speed & Tolerance)', fontsize=13)
+fig.colorbar(surf, shrink=0.5, aspect=10, label='Loss Value')
+plt.legend(loc='upper left')
+plt.tight_layout()
+plt.show()
