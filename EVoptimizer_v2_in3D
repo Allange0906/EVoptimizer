@@ -62,7 +62,7 @@ def extreme_value_optimizer(w_init, lr=0.05, epochs=60, tol=0.05):
     return w, w_history
 
 # 최적화 실행
-w_final, w_hist = extreme_value_optimizer(w_init=[2.0, 0.0], lr=0.05, epochs=60)
+w_final, w_hist = extreme_value_optimizer(w_init=[2.0, 0.0], lr=0.05, epochs=100)
 w_hist = np.array(w_hist)
 
 x_range = np.linspace(-2.5, 2.5, 100)
